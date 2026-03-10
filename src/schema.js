@@ -1,4 +1,5 @@
 import { validate } from './validate.js';
+import { applyTransform } from './transform.js';
 
 export function createSchema(fields) {
   const schema = {
@@ -18,7 +19,8 @@ export function createSchema(fields) {
 
       // Validate each field
       for (const [key, type] of Object.entries(fields)) {
-        const value = data[key];
+        let value = data[key];
+        value = applyTransform(type, value);
         const result = validate(type, value, key);
 
         if (result.success) {
@@ -48,7 +50,8 @@ export function createSchema(fields) {
       }
 
       for (const [key, type] of Object.entries(fields)) {
-        const value = data[key];
+        let value = data[key];
+        value = applyTransform(type, value);
 
         // Check if validator is async
         if (type._validate && type._validate.constructor.name === 'AsyncFunction') {
