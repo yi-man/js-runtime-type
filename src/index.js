@@ -1,2 +1,2 @@
-export const createType = () => {};
-export const createSchema = () => {};
+export * from './types/index.js';
+export { createSchema } from './schema.js';
