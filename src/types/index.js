@@ -32,3 +32,5 @@ export const boolean = createType('boolean', {
 export const date = createType('date', {
   validate: (val) => val instanceof Date
 });
+
+export * from './compound.js';

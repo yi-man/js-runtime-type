@@ -14,8 +14,8 @@ export function validate(type, value, path = '') {
     };
   }
 
-  // Run base validation
-  if (!type._validate(value)) {
+  // Run base validation (skip if type doesn't have _validate, like schemas)
+  if (type._validate && !type._validate(value)) {
     errors.push({
       path,
       message: `Expected ${type._type}, got ${typeof value}`,
@@ -31,6 +31,58 @@ export function validate(type, value, path = '') {
 
   if (errors.length > 0) {
     return { success: false, errors };
+  }
+
+  // Array validation
+  if (type._type === 'array') {
+    const itemType = type._rules?.items;
+    if (!itemType) {
+      return { success: true, data: value };
+    }
+
+    const resultArray = [];
+    const itemErrors = [];
+
+    for (let i = 0; i < value.length; i++) {
+      const itemPath = path ? `${path}[${i}]` : `[${i}]`;
+      const itemResult = validate(itemType, value[i], itemPath);
+
+      if (itemResult.success) {
+        resultArray.push(itemResult.data);
+      } else {
+        itemErrors.push(...itemResult.errors);
+      }
+    }
+
+    if (itemErrors.length > 0) {
+      return { success: false, errors: itemErrors };
+    }
+
+    return { success: true, data: resultArray };
+  }
+
+  // Object validation (for nested schemas)
+  if (type._fields) {
+    const allErrors = [];
+    const resultData = {};
+
+    for (const [key, fieldType] of Object.entries(type._fields)) {
+      const fieldPath = path ? `${path}.${key}` : key;
+      const fieldValue = value[key];
+      const fieldResult = validate(fieldType, fieldValue, fieldPath);
+
+      if (fieldResult.success) {
+        resultData[key] = fieldResult.data;
+      } else {
+        allErrors.push(...fieldResult.errors);
+      }
+    }
+
+    if (allErrors.length > 0) {
+      return { success: false, errors: allErrors };
+    }
+
+    return { success: true, data: resultData };
   }
 
   return { success: true, data: value };
