@@ -34,3 +34,4 @@ export const date = createType('date', {
 });
 
 export * from './compound.js';
+export * from './special.js';

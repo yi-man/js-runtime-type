@@ -85,6 +85,51 @@ export function validate(type, value, path = '') {
     return { success: true, data: resultData };
   }
 
+  // Literal validation
+  if (type._literalValue !== undefined) {
+    if (value !== type._literalValue) {
+      errors.push({
+        path,
+        message: `Expected ${type._literalValue}, got ${value}`,
+        expected: type._literalValue,
+        actual: value
+      });
+      return { success: false, errors };
+    }
+    return { success: true, data: value };
+  }
+
+  // Enum validation
+  if (type._enumValues !== undefined) {
+    if (!type._enumValues.includes(value)) {
+      errors.push({
+        path,
+        message: `Must be one of: ${type._enumValues.join(', ')}`,
+        expected: type._enumValues,
+        actual: value
+      });
+      return { success: false, errors };
+    }
+    return { success: true, data: value };
+  }
+
+  // Union validation
+  if (type._unionTypes !== undefined) {
+    for (const t of type._unionTypes) {
+      const result = validate(t, value, path);
+      if (result.success) {
+        return result;
+      }
+    }
+    errors.push({
+      path,
+      message: `Must match one of ${type._unionTypes.length} types`,
+      expected: 'union',
+      actual: typeof value
+    });
+    return { success: false, errors };
+  }
+
   return { success: true, data: value };
 }
 
