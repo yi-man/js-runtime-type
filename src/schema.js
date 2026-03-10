@@ -53,10 +53,11 @@ export function createSchema(fields) {
         let value = data[key];
         value = applyTransform(type, value);
 
-        // Check if validator is async
-        if (type._validate && type._validate.constructor.name === 'AsyncFunction') {
+        // Check if validator is async (either in _validate or _rules.validate)
+        const customValidate = type._rules?.validate || type._validate;
+        if (customValidate && customValidate.constructor.name === 'AsyncFunction') {
           try {
-            const isValid = await type._validate(value);
+            const isValid = await customValidate(value);
             if (!isValid) {
               allErrors.push({
                 path: key,
